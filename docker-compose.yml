@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: "localstack"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      DEBUG: ${DEBUG:-0}
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  app:
+    build: .
+    volumes: 
+      - .:/src
+      - nodemodules:/src/node_modules
+    restart: on-failure
+    ports:
+      - 3000:3000
+    depends_on:
+      - localstack
+    environment:
+      LOCALSTACK_HOST: localstack
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-west-1
+      AWS_ENDPOINT_URL: localhost
+      
+  test:
+    build: .
+    command: npm run test:watch
+    volumes: 
+      - .:/src
+      - nodemodules:/src/node_modules
+    restart: on-failure
+    depends_on:
+      - localstack
+    environment:
+      LOCALSTACK_HOST: localstack
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-west-1
+      AWS_ENDPOINT_URL: localhost
+
+volumes:
+  nodemodules: {}

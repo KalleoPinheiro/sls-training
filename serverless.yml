@@ -1,0 +1,33 @@
+service: sls-training
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  environment: 
+    LOCALSTACK_HOST: ${env:LOCALSTACK_HOST, "localhost"}
+    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+    AWS_DEFAULT_REGION: ${env:AWS_DEFAULT_REGION}
+    AWS_ENDPOINT_URL: ${env:AWS_ENDPOINT_URL}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+        - Action: s3:ListAllMyBuckets
+        - Resources: *
+
+plugins:
+- serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+
+functions:
+  buckets:
+    handler: ./src/functions/hello/index.main
+    events:
+      - httpApi:
+          path: /
+          method: get
